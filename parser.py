@@ -17,6 +17,7 @@ decoder_map = {
     'base64': base64.b64decode,
     '': lambda payload: payload.encode('utf-8'),
     '7bit': lambda payload: payload.encode('utf-8'),
+    '8bit': lambda payload: payload.encode('utf-8'),
     'quoted-printable': quopri.decodestring
 }
 
@@ -110,11 +111,8 @@ def get_eml(raw_mail, compress_eml):
         content = file.getvalue()
     return content
 
-def serialize_mail(raw_mail, compress_eml=False):
-    mail = mailparser.parse_from_bytes(raw_mail)
-    files = []
-    # Build manifest
-    body = {
+def get_manifest(mail, compress_eml):
+    return {
         'headers': {
             'subject': mail.subject,
             'to': [x[1] for x in mail.to] if mail.to else [],
@@ -131,6 +129,12 @@ def serialize_mail(raw_mail, compress_eml=False):
             'compressed': compress_eml,
         }
     }
+
+def serialize_mail(raw_mail, compress_eml=False):
+    mail = mailparser.parse_from_bytes(raw_mail)
+    files = []
+    # Build manifest
+    body = get_manifest(mail, compress_eml)
     files.append(
         ('manifest', ('manifest.json', BytesIO(json.dumps(body).encode('utf-8')), JSON_MIME))
     )
